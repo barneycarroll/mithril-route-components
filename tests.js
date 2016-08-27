@@ -3,15 +3,13 @@ const m    = require( 'mithril' )
 
 m.route = require( './index' )
 
-console.log( m.route )
-
 test( 'Matches the m.route signature', test => {
 	test.plan( 1 )
 
 	m.route( document.body, '/', {
 		'/' : {
-			onmatch : () =>
-				test.pass( 'resolved a route endpoint' )
+			onmatch : ( {}, done ) =>
+				done( test.pass( 'resolved a route endpoint' ) )
 		}
 	} )
 } )
@@ -21,8 +19,8 @@ test( 'Triggers onmatch, oninit, oncreate and view hooks', test => {
 
 	m.route( document.body, '/', {
 		'/' : {
-			onmatch : () =>
-				test.pass( 'onmatch' ),
+			onmatch : ( {}, done ) =>
+				done( test.pass( 'onmatch' ) ),
 
 			oninit : () =>
 				test.pass( 'oninit' ),
