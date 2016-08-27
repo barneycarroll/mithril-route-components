@@ -59,7 +59,7 @@ new function(){
 
 			output[ route ] = {
 				onmatch : function( vnode ){
-					{ attrs, state } = vnode
+					( { attrs, state } = vnode )
 
 					let guid = resolution = {}
 
