@@ -1,4 +1,4 @@
-# Mithril route components
+# Mithril route components [![Build Status](https://travis-ci.org/barneycarroll/mithril-route-components.svg?branch=master)](https://travis-ci.org/barneycarroll/mithril-route-components)
 
 Mithril 1 makes a distinction between RouteResolvers and Components as route endpoints. The Mithril Route Components plugin collapses that distinction. The end result is more control over your routing behaviour.
 
