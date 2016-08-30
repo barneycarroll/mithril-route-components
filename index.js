@@ -1,19 +1,18 @@
-
 if( typeof module == 'object' && typeof require == 'function' ){
 	var m = require( 'mithril' )
 
-	module.exports = routeComponent
+	module.exports = Object.assign( routeComponents, m.route )
 }
 
 const m_route = m.route
 
-function routeComponent( root, initial, hash ){
+function routeComponents( root, initial, hash ){
 	let present
 	let previous
 	let attrs
 	let state
 	let resolution
-	let redraw
+	let strategy
 
 	const wrapper = {
 		oninit         : function( vnode ){
@@ -54,6 +53,17 @@ function routeComponent( root, initial, hash ){
 		},
 	}
 
+	const draw = () => {
+		if( !present )
+			return
+
+		if( strategy == true )
+			m.mount( root, Object.assign( {}, wrapper ) )
+		
+		else if( strategy != false )
+			m.mount( root, wrapper )
+	}
+
 	m_route( document.createElement( 'div' ), initial, Object.keys( hash ).reduce( ( output, route ) => {
 		const component = hash[ route ]
 
@@ -71,22 +81,17 @@ function routeComponent( root, initial, hash ){
 					present  = component
 					resolution = undefined
 
-					redraw = flag
+					strategy = flag
 
-					if( redraw == true )
-						m.mount( root, Object.assign( {}, wrapper ) )
+					draw()
 				}
 
 				if( !component.onmatch )
 					return resolve()
 
-				redraw = component.onmatch( vnode, resolve )
+				strategy = component.onmatch( vnode, resolve )
 
-				if( redraw == true )
-					m.mount( root, Object.assign( {}, wrapper ) )
-
-				else if( redraw != false )
-					m.mount( root, wrapper )
+				draw()
 			}
 		}
 

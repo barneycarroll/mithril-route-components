@@ -4,7 +4,7 @@
   "description": "Mithril 1 makes a distinction between RouteResolvers and Components as route endpoints. Mithril Route Components collapses that distinction.",
   "main": "index.js",
   "scripts": {
-    "test": "browserify tests.js | tape-run"
+    "test": "node node_modules/mithril/ospec/bin/ospec"
   },
   "repository": {
     "type": "git",
@@ -26,10 +26,6 @@
     "mithril": "github:lhorie/mithril.js#rewrite"
   },
   "devDependencies": {
-    "browserify": "^13.1.0",
-    "mithril": "github:lhorie/mithril.js#rewrite",
-    "muty": "^0.1.4",
-    "tape": "^4.6.0",
-    "tape-run": "^2.1.4"
+    "mithril": "github:lhorie/mithril.js#rewrite"
   }
 }
