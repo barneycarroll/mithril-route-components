@@ -105,11 +105,17 @@ o( 'New route endpoints diff by default', done => {
 	} )
 } )
 
-o.spec( 'onmatch behaviour', () => {
-	o( 'defers route resolution by default', done => {
+o.spec( 'onmatch', () => {
+	o( 'always executes before lifecycle methods', done => {
 		const routes = {
 			'/' : {
-				onmatch : o.spy(),
+				onmatch : o.spy( () => {
+					o( routes[ '/' ].oninit.callCount ).equals( 0 )
+						( 'oninit should not have been called yet' )
+
+					o( routes[ '/' ].view.callCount ).equals( 0 )
+						( 'view should not have been called yet' )
+				} ),
 
 				oninit  : o.spy(),
 
@@ -122,10 +128,60 @@ o.spec( 'onmatch behaviour', () => {
 		callAsync( () => {
 			o( routes[ '/' ].onmatch.callCount ).equals( 1 )
 				( 'onmatch should have been called once' )
+
+			done()
+		} )
+	} )
+
+	o( 'with a resolve argument reference, blocks lifecycle', done => {
+		const routes = {
+			'/' : {
+				onmatch : o.spy( ( {}, resolve ) => {} ),
+
+				oninit  : o.spy(),
+
+				view    : o.spy()
+			}
+		}
+
+		m.route( document.body, '/', routes )
+
+		callAsync( () => {
+			o( routes[ '/' ].onmatch.callCount ).equals( 1 )
+				( 'onmatch should have been called once' )
+
 			o( routes[ '/' ].oninit.callCount ).equals( 0 )
 				( 'oninit should not have been called' )
+
 			o( routes[ '/' ].view.callCount ).equals( 0 )
 				( 'view should not have been called' )
+
+			done()
+		} )
+	} )
+
+	o( 'without a resolve argument reference, does not block lifecycle', done => {
+		const routes = {
+			'/' : {
+				onmatch : o.spy(),
+
+				oninit  : o.spy( () => 
+					o( routes[ '/' ].onmatch.callCount ).equals( 1 )
+						( 'onmatch should have been called once before oninit' )
+				),
+
+				view    : o.spy( () =>
+					o( routes[ '/' ].oninit.callCount ).equals( 1 )
+						( 'oninit should have been called once before view' )
+				)
+			}
+		}
+
+		m.route( document.body, '/', routes )
+
+		callAsync( () => {
+			o( routes[ '/' ].view.callCount ).equals( 1 )
+				( 'view should have been called once' )
 
 			done()
 		} )

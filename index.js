@@ -89,9 +89,14 @@ function routeComponents( root, initial, hash ){
 				if( !component.onmatch )
 					return resolve()
 
-				strategy = component.onmatch( vnode, resolve )
+				else if( component.onmatch.length < 2 )
+					resolve( component.onmatch( vnode ) )
 
-				draw()
+				else {
+					strategy = component.onmatch( vnode, resolve )
+
+					draw()
+				}
 			}
 		}
 

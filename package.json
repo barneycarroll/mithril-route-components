@@ -23,9 +23,9 @@
   },
   "homepage": "https://github.com/barneycarroll/mithril-route-components#readme",
   "peerDependencies": {
-    "mithril": "github:lhorie/mithril.js#rewrite"
+    "mithril": "github:barneycarroll/mithril.js#ospec-spy-wrapping"
   },
   "devDependencies": {
-    "mithril": "github:lhorie/mithril.js#rewrite"
+    "mithril": "github:barneycarroll/mithril.js#ospec-spy-wrapping"
   }
 }
