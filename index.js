@@ -17,6 +17,7 @@ const root_proxy = ( () => {
 		proxies.set( root, proxy )
 		
 		return proxy
+	}
 } )()
 
 function routeComponents( root, initial, hash ){
