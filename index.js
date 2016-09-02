@@ -36,6 +36,8 @@ function routeComponents( root, initial, hash ){
 				return present.oninit.apply( this, arguments )
 		},
 		oncreate       : function(){
+			redraw = undefined
+			
 			if( present.oncreate )
 				return present.oncreate.apply( this, arguments )
 		},
@@ -45,6 +47,8 @@ function routeComponents( root, initial, hash ){
 
 				return false
 			}
+			
+			redraw = undefined
 
 			if( present.onbeforeupdate )
 				return present.onbeforeupdate.apply( this, arguments )
@@ -116,10 +120,4 @@ function routeComponents( root, initial, hash ){
 
 		return output
 	}, {} ) )
-
-	m.mount( document.createElement( 'div' ), {
-		oncreate : () => redraw = undefined,
-		onupdate : () => redraw = undefined,
-		view     : () => {}
-	} )
 }
