@@ -2,6 +2,15 @@
 
 Mithril 1 makes a distinction between RouteResolvers and Components as route endpoints. The Mithril Route Components plugin collapses that distinction. The end result is more control over your routing behaviour.
 
+|                              | RouteResolver | Component | Route Component |
+| ---                          | ---           | ---       | ---             |
+| Redirection                  | ✓             |           | ✓               |
+| Deferred resolution          | ✓             |           | ✓               |
+| Virtual DOM diff / patch     | ✓             |           | ✓<sup>1</sup>   |
+| Lifecycle methods            |               | ✓         | ✓<sup>1</sup>   |
+| Route properties via `attrs` | ✓             | ✓         | ✓               |
+| Persistent data via `state`  |               | ✓         | ✓               |
+
 The plugin stands in for `m.route` and can be used as a patch:
 
 ```js
