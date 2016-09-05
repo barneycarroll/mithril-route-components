@@ -14,7 +14,7 @@ function routeComponents( root, initial, hash ){
 	let resolution
 	let strategy
 
-	const wrapper = {
+	let wrapper = {
 		oninit         : function( vnode ){
 			Object.assign( vnode, { attrs, state } )
 
@@ -61,10 +61,10 @@ function routeComponents( root, initial, hash ){
 		if( !present )
 			return
 
-		if( strategy == true )
-			m.mount( root, Object.assign( {}, wrapper ) )
-		
-		else if( strategy != false )
+		else if( strategy === true )
+			wrapper = Object.assign( {}, wrapper )
+
+		if( strategy !== false )
 			m.mount( root, wrapper )
 	}
 
@@ -85,7 +85,11 @@ function routeComponents( root, initial, hash ){
 					present  = component
 					resolution = undefined
 
-					strategy = flag
+					if( !previous || previous.onremove !== false || present.oninit !== false )
+						strategy = true
+
+					else 
+						strategy = flag
 
 					draw()
 				}
