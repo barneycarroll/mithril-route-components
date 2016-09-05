@@ -1,3 +1,5 @@
+/**/ new function(){ /**/
+
 const o         = require( 'mithril/ospec/ospec' )
 const mock      = require( 'mithril/test-utils/browserMock' )()
 const callAsync = cb => setTimeout( cb, 1000 / 60 )
@@ -10,8 +12,6 @@ const m = require( 'mithril' )
 m.route = require( '../index' )
 
 o.beforeEach( done => {
-	window.location.href = ''
-
 	m.mount( document.body, null )
 
 	callAsync( done )
@@ -245,3 +245,7 @@ o.spec( 'onmatch', () => {
 		} )
 	} )
 } )
+
+o.run()
+
+/**/ }() /**/

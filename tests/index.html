@@ -1,0 +1,28 @@
+<!doctype html>
+<html>
+	<head>
+		<meta charset="utf-8">
+		<title>Mithril route components test suite</title>
+		<script>
+			const global  = {}
+			const module  = { exports : undefined }
+			const modules = {}
+			const require = path => modules[ path.match( /\w+$/ ) ] || ( () => window )
+		</script>
+	</head>
+	<body>
+		<script src="../node_modules/mithril/ospec/ospec.js"></script>
+		<script>
+			modules.ospec   = module.exports
+		</script>
+		<script src="../node_modules/mithril/mithril.js"></script>
+		<script>
+			modules.mithril = module.exports
+		</script>
+		<script src="../index.js"></script>
+		<script>
+			modules.index   = module.exports
+		</script>
+		<script src="index.js"></script>
+	</body>
+</html>
