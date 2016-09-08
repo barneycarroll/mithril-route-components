@@ -5,6 +5,20 @@ if( typeof module == 'object' && typeof require == 'function' ){
 }
 
 const m_route = m.route
+const root_proxy = ( () => {
+	const proxies = new WeakMap()
+	
+	return root => {
+		if( proxies.has( root ) )
+			return proxies.get( root )
+		
+		const proxy = document.createElement( 'div' )
+		
+		proxies.set( root, proxy )
+		
+		return proxy
+	}
+} )()
 
 function routeComponents( root, initial, hash ){
 	let present
@@ -68,7 +82,7 @@ function routeComponents( root, initial, hash ){
 			m.mount( root, wrapper )
 	}
 
-	m_route( document.createElement( 'div' ), initial, Object.keys( hash ).reduce( ( output, route ) => {
+	m_route( root_proxy( root ), initial, Object.keys( hash ).reduce( ( output, route ) => {
 		const component = hash[ route ]
 
 		output[ route ] = {
