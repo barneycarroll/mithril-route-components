@@ -211,7 +211,7 @@ o.spec( 'onmatch', () => {
 
 				onbeforeupdate : o.spy( () =>
 					o( routes[ '/2' ].onmatch.callCount ).equals( 1 )
-						( 'onbeforeupdate should have been called once before onbeforeupdate' )
+						( 'onmatch should have been called once before onbeforeupdate' )
 				),
 
 				view           : o.spy( () => 
@@ -229,18 +229,16 @@ o.spec( 'onmatch', () => {
 			o( routes[ '/1' ].view.callCount ).equals( 1 )
 				( 'view should have been called once' )
 
-			o.spec( 'upon re-routing', () => {
-				m.route.set( '/2' )
+			m.route.set( '/2' )
 
-				callAsync( () => {
-					o( routes[ '/2' ].onbeforeupdate.callCount ).equals( 1 )
-						( 'onbeforeupdate should have been called once, since the onmatch resolved' )
+			callAsync( () => {
+				o( routes[ '/2' ].onbeforeupdate.callCount ).equals( 1 )
+					( 'onbeforeupdate should have been called once, since the onmatch resolved' )
 
-					o( routes[ '/2' ].view.callCount ).equals( 1 )
-						( 'view should have been called once, since the onmatch resolved' )
+				o( routes[ '/2' ].view.callCount ).equals( 1 )
+					( 'view should have been called once, since the onmatch resolved' )
 
-					done()
-				} )
+				done()
 			} )
 		} )
 	} )
