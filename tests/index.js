@@ -1,249 +1,182 @@
 /**/ new function(){ /**/
 
-const o         = require( 'mithril/ospec/ospec' )
-const mock      = require( 'mithril/test-utils/browserMock' )()
-const callAsync = cb => setTimeout( cb, 1000 / 60 )
+const o     = require( 'mithril/ospec/ospec' )
+const mock  = require( 'mithril/test-utils/browserMock' )()
+const steps = ( step1, ...rest ) => new Promise( done => {
+	if( rest.length === 0 )
+		done()
+
+	else
+		setTimeout( () => {
+			Promise.resolve( step1 ).then( () => steps( ...rest ) ).then( done )
+		}, 1000 / 60 )
+} )
 
 global.window   = mock
 global.document = mock.document
 
 const m = require( 'mithril' )
 
-m.route = require( '../index' )
+const mRC = require( '../index.cjs' )
 
 o.beforeEach( done => {
-	m.mount( document.body, null )
+	m.route( document.body, '/', { '/' : { view : () => '' } } )
 
-	callAsync( done )
+	steps( done )
 } )
 
-o( 'Generic components run initialisation lifecycle in expected order', done => {
-	const component = {
-		oninit   : o.spy(),
+o( 'Route Components run initialisation lifecycle in expected order', done => {
+	const Component = {
+		onmatch  : o.spy(),
+		oninit   : o.spy( () =>
+			o( Component.onmatch.callCount ).equals( 1 )
+				( 'oninit should have been called once before view' )
+		),
 
 		view     : o.spy( () =>
-			o( component.oninit.callCount ).equals( 1 )
+			o( Component.oninit.callCount ).equals( 1 )
 				( 'oninit should have been called once before view' )
 		),
 
 		oncreate : o.spy( () =>
-			o( component.view.callCount ).equals( 1 )
+			o( Component.view.callCount ).equals( 1 )
 				( 'view should have been called once before oninit' )
 		)
 	}
 
+	const RouteComponent = mRC( Component )
+
 	m.route( document.body, '/', {
-		'/' : component
+		'/' : RouteComponent
 	} )
 
-	callAsync( () => {
-		o( component.oncreate.callCount ).equals( 1 )
+	step( () => {
+		o( Component.oncreate.callCount ).equals( 1 )
 			( 'oncreate should have been called once' )
 
 		done()
 	} )
 } )
 
-o( 'New route endpoints diff by default', done => {
+o( 'Vnode attrs & state persist between onmatch and Component lifecycle', done => {
+	let attrs
+	let state
+
+	const assertion = method => ( vnode, fn ) => {
+		o( vnode.attrs ).equals( attrs )
+			( 'attrs reference persisted to ' + method )
+
+		o( vnode.state ).equals( state )
+			( 'state reference persisted to ' + method )
+
+		o( vnode.state.mutated ).equals( true )
+			( 'state mutation persisted to ' + method )
+
+		if( fn )
+			return fn( vnode )
+	}
+
+	const Component = {
+		onmatch  : vnode => {
+			attrs = vnode.attrs
+			state = vnode.state
+
+			state.mutated = true
+		},
+
+		oninit         : o.spy( assert( 'oninit'         ) ),
+		oncreate       : o.spy( assert( 'oncreate'       ) ),
+		onbeforeupdate : o.spy( assert( 'onbeforeupdate' ) ),
+		onupdate       : o.spy( assert( 'onupdate'       ) ),
+		onbeforeremove : o.spy( assert( 'onbeforeremove' ) ),
+		onremove       : o.spy( assert( 'onremove'       ) ),
+
+		view           : o.spy( assert( 'view', () => '' ) )
+	}
+
+	const RouteComponent = mRC( Component )
+
+	m.route( document.body, '/1', {
+		'/1' : RouteComponent,
+		'/2' : {
+			view : () => ''
+		}
+	} )
+
+	steps(
+		() =>
+			m.route.set( '/2' ),
+
+		() =>
+			Object.keys( Component ).map( key =>
+				o( Component[ key ].callCount ).equals( 1 )
+			),
+
+		done
+	)
+} )
+
+o( 'Same Route Component on different routes runs onmatch and sets, but diffs', done => {
 	let dom1
 	let dom2
 
+	const Component = {
+		onmatch        : o.spy(),
+		oninit         : o.spy(),
+		onbeforeupdate : o.spy(),
+		oncreate       : o.spy( vnode => dom1 = vnode.dom ),
+		onupdate       : o.spy( vnode => dom2 = vnode.dom ),
+
+		onbeforeremove : o.spy(),
+		onremove       : o.spy(),
+
+		view           : o.spy( () => '' ),
+	}
+
+	const RouteComponent = mRC( Component )
+
 	const routes = {
-		'/1' : {
-			oninit   : o.spy(),
-
-			view     : () => 
-				m( 'p' ),
-
-			oncreate : vnode =>
-				dom1 = vnode.dom,
-
-			onbeforeremove : o.spy(),
-			onremove       : o.spy()
-		},
-
-		'/2' : {
-			oninit         : o.spy(),
-			onbeforeupdate : o.spy(),
-
-			view           : () => 
-				m( 'p' ),
-
-			onupdate       : vnode =>
-				dom2 = vnode.dom  
-		}
+		'/1' : RouteComponent,
+		'/2' : RouteComponent
 	}
 
 	m.route( document.body, '/1', routes )
 
-	callAsync( () => {
-		o( routes[ '/1' ].oninit.callCount ).equals( 1 )
-			( 'route 1 oninit should have been called once ')
+	steps(
+		() =>
+			m.route.set( '/2' ),
 
-		o.spec( 'upon re-routing', () => {
-			m.route.set( '/2' )
+		() => {
+			o( Component.onmatch.callCount ).equals( 1 )
+				( 'onmatch should have been called twice' )
 
-			callAsync( () => {
-				o( routes[ '/1' ].onbeforeremove.callCount ).equals( 0 )
-					( 'route 1 onbeforeremove should not have been called' )
+			o( Component.oninit.callCount ).equals( 1 )
+				( 'onmatch should have been called twice' )
 
-				o( routes[ '/1' ].onremove.callCount       ).equals( 0 )
-					( 'route 1 onremove should not have been called' )
+			o( Component.onbeforeupdate.callCount ).equals( 1 )
+				( 'onbeforeupdate should have been called once' )
 
-				o( routes[ '/2' ].oninit.callCount         ).equals( 0 )
-					( 'route 2 oninit should not have been called' )
+			o( Component.oncreate.callCount ).equals( 1 )
+				( 'oncreate should have been called once' )
 
-				o( routes[ '/2' ].onbeforeupdate.callCount ).equals( 1 )
-					( 'route 2 onbeforeupdate should have been called once' )
+			o( Component.onupdate.callCount ).equals( 1 )
+				( 'onupdate should have been called once' )
 
-				o( dom1 ).equals( dom2 )
-					( 'the vnode dom routes should be the same' )
+			o( Component.onbeforeremove.callCount ).equals( 0 )
+				( 'onbeforeremove should not have been called' )
 
-				done()
-			} )
-		} )
-	} )
-} )
+			o( Component.onremove.callCount ).equals( 0 )
+				( 'onremove should not have been called ')
 
-o.spec( 'onmatch', () => {
-	o( 'always executes before lifecycle methods', done => {
-		const routes = {
-			'/' : {
-				onmatch : o.spy( () => {
-					o( routes[ '/' ].oninit.callCount ).equals( 0 )
-						( 'oninit should not have been called yet' )
+			o( Component.view.callCount ).equals( 2 )
+				( 'view should have been called twice' )
 
-					o( routes[ '/' ].view.callCount ).equals( 0 )
-						( 'view should not have been called yet' )
-				} ),
+			o( dom1 ).equals( dom2 )
+				( 'the dom node should persist' )
+		},
 
-				oninit  : o.spy(),
-
-				view    : o.spy()
-			}
-		}
-
-		m.route( document.body, '/', routes )
-
-		callAsync( () => {
-			o( routes[ '/' ].onmatch.callCount ).equals( 1 )
-				( 'onmatch should have been called once' )
-
-			done()
-		} )
-	} )
-
-	o( 'with a resolve argument reference, blocks lifecycle', done => {
-		const routes = {
-			'/' : {
-				onmatch : o.spy( ( {}, resolve ) => {} ),
-
-				oninit  : o.spy(),
-
-				view    : o.spy()
-			}
-		}
-
-		m.route( document.body, '/', routes )
-
-		callAsync( () => {
-			o( routes[ '/' ].onmatch.callCount ).equals( 1 )
-				( 'onmatch should have been called once' )
-
-			o( routes[ '/' ].oninit.callCount ).equals( 0 )
-				( 'oninit should not have been called' )
-
-			o( routes[ '/' ].view.callCount ).equals( 0 )
-				( 'view should not have been called' )
-
-			done()
-		} )
-	} )
-
-	o( 'without a resolve argument reference, does not block lifecycle', done => {
-		const routes = {
-			'/' : {
-				onmatch : o.spy(),
-
-				oninit  : o.spy( () => 
-					o( routes[ '/' ].onmatch.callCount ).equals( 1 )
-						( 'onmatch should have been called once before oninit' )
-				),
-
-				view    : o.spy( () =>
-					o( routes[ '/' ].oninit.callCount ).equals( 1 )
-						( 'oninit should have been called once before view' )
-				)
-			}
-		}
-
-		m.route( document.body, '/', routes )
-
-		callAsync( () => {
-			o( routes[ '/' ].view.callCount ).equals( 1 )
-				( 'view should have been called once' )
-
-			done()
-		} )
-	} )
-
-	o( 'calling resolve engages the lifecycle', done => {
-		const routes = {
-			'/1' : {
-				onmatch  : o.spy( ( {}, resolve ) =>
-					resolve()
-				),
-
-				oninit   : o.spy( () =>
-					o( routes[ '/1' ].onmatch.callCount ).equals( 1 )
-						( 'onmatch should have been called once before oninit' )
-				),
-
-				view     : o.spy( () => 
-					m( 'p' )
-				)
-			},
-
-			'/2' : {
-				onmatch        : o.spy( ( {}, resolve ) =>
-					resolve()
-				),
-
-				onbeforeupdate : o.spy( () =>
-					o( routes[ '/2' ].onmatch.callCount ).equals( 1 )
-						( 'onbeforeupdate should have been called once before onbeforeupdate' )
-				),
-
-				view           : o.spy( () => 
-					m( 'p' ) 
-				)
-			}
-		}
-
-		m.route( document.body, '/1', routes )
-
-		callAsync( () => {
-			o( routes[ '/1' ].oninit.callCount ).equals( 1 )
-				( 'oninit should have been called once' )
-
-			o( routes[ '/1' ].view.callCount ).equals( 1 )
-				( 'view should have been called once' )
-
-			o.spec( 'upon re-routing', () => {
-				m.route.set( '/2' )
-
-				callAsync( () => {
-					o( routes[ '/2' ].onbeforeupdate.callCount ).equals( 1 )
-						( 'onbeforeupdate should have been called once, since the onmatch resolved' )
-
-					o( routes[ '/2' ].view.callCount ).equals( 1 )
-						( 'view should have been called once, since the onmatch resolved' )
-
-					done()
-				} )
-			} )
-		} )
-	} )
+		done
+	)
 } )
 
 o.run()

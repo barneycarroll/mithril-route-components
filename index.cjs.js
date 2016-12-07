@@ -1,22 +1,21 @@
 var derivatives = [[],[]]
 
-module.exports = map( compose )
-
-function compose( composite ){
+module.exports = function compose( composite ){
   var onmatch
   var oninit
   var rest = {}
 
-  map( function( method, key ){
-    if( key === 'oninit' )
-      oninit = method
+  for( var key in input )
+    if( input.hasOwnProperty( key ) ){
+      if( key === 'oninit' )
+        oninit = method
 
-    else if( key === 'onmatch' )
-      onmatch = method
+      else if( key === 'onmatch' )
+        onmatch = method
 
-    else
-      rest[ key ] = method
-  } )( composite )
+      else
+        rest[ key ] = input[ key ]
+    }
 
   var component = getSet( derivates, composite, function(){
     return rest
@@ -63,16 +62,4 @@ function getSet( arrays, key, factory ){
   }
 
   return value
-}
-
-function map( verb ){
-  return function( input ){
-    var output = {}
-
-    for( var key in input )
-      if( input.hasOwnProperty( key ) )
-        output[ key ] = verb( input[ key ], key )
-
-    return output
-  }
 }

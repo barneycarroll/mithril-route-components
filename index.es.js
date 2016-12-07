@@ -1,8 +1,6 @@
 const derivatives = new WeakMap()
 
-export default map( compose )
-
-function compose( composite ){
+export default function compose( composite ){
   const { onmatch, oninit, ...rest } = composite
   const component = getSet( derivates, composite, () => rest )
   const resolver  = {
@@ -33,16 +31,4 @@ function getSet( map, key, factory ){
     map.set( key, factory() )
 
   return map.get( key )
-}
-
-function map( verb ){
-  return input => {
-    var output = {}
-
-    for( let key in input )
-      if( input.hasOwnProperty( key ) )
-        output[ key ] = verb( input[ key ], key )
-
-    return output
-  }
 }
